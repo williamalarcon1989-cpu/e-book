@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FISIOLOGÍA DEL EJERCICIO — Evaluación Interactiva</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Tone.js para efectos de sonido interactivos -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#1e1b4b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Animaciones suaves y utilidades táctiles */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-enter {
+      animation: fadeSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .chip-selected {
+      ring: 3px;
+      transform: scale(1.04);
+      box-shadow: 0 10px 15px -3px rgba(56, 189, 248, 0.35);
+    }
+    .drop-target-active {
+      border-color: #38bdf8 !important;
+      background-color: #e0f2fe !important;
+    }
+    /* Evitar selección de texto al arrastrar fichas */
+    .no-select {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    /* Efecto de sombra realista y protagonismo para los personajes recortados */
+    .character-cutout {
+      object-fit: contain;
+      filter: drop-shadow(0 14px 22px rgba(2, 6, 23, 0.65));
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .character-cutout:hover {
+      transform: translateY(-4px) scale(1.03);
+    }
+    /* Estilo Azul Profundo con imagen de fondo img/fondo-actividad.png */
+    .app-bg {
+      background-color: #04132a;
+      background-image:
+        linear-gradient(135deg, rgba(4, 19, 42, 0.78) 0%, rgba(7, 30, 66, 0.72) 50%, rgba(4, 18, 38, 0.84) 100%),
+        url('img/fondo-actividad.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    /* Paneles translúcidos azul marino */
+    .blue-glass {
+      background: rgba(8, 28, 62, 0.78);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      box-shadow: 0 16px 36px -8px rgba(2, 6, 23, 0.55);
+    }
+    /* Panel claro de alto contraste para la zona de trabajo interactiva */
+    .work-panel {
+      background: rgba(255, 255, 255, 0.97);
+      border: 1px solid rgba(186, 230, 253, 0.55);
+      box-shadow: 0 16px 36px -8px rgba(2, 6, 23, 0.5);
+    }
+  </style>
+</head>
+<body class="app-bg text-slate-100 font-sans antialiased lg:h-screen lg:overflow-hidden flex flex-col selection:bg-cyan-500 selection:text-slate-950">
+
+  <!-- Barra superior azul profundo -->
+  <header class="shrink-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-cyan-500/25 shadow-lg">
+    <div class="max-w-7xl mx-auto px-3 sm:px-5 py-2.5">
+      <div class="flex flex-wrap lg:flex-nowrap items-center justify-between gap-2.5">
+        <!-- Marca / Título Único -->
+        <button onclick="goHome()" class="flex items-center gap-2.5 text-left group focus:outline-none shrink-0">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white flex items-center justify-center shadow-md shadow-cyan-500/30 group-hover:scale-105 transition-transform">
+            <i data-lucide="activity" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="text-sm sm:text-lg font-extrabold tracking-wide text-white leading-tight uppercase">FISIOLOGÍA DEL EJERCICIO</h1>
+          </div>
+        </button>
+
+        <!-- Pestañas Horizontales Integradas en el Header -->
+        <nav aria-label="Módulos de evaluación" class="order-3 lg:order-2 w-full lg:w-auto flex-1 max-w-2xl grid grid-cols-3 gap-2">
+          <button id="nav-mod-0" onclick="selectModule(0)" class="flex items-center justify-center sm:justify-between gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border">
+            <span class="truncate">MÓDULO 1: ATP</span>
+            <span id="badge-mod-0" class="hidden sm:inline-block text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-900/70 text-cyan-200">0/5</span>
+          </button>
+          <button id="nav-mod-1" onclick="selectModule(1)" class="flex items-center justify-center sm:justify-between gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border">
+            <span class="truncate">MÓDULO 2: Vía Fosfagénica</span>
+            <span id="badge-mod-1" class="hidden sm:inline-block text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-900/70 text-cyan-200">0/4</span>
+          </button>
+          <button id="nav-mod-2" onclick="selectModule(2)" class="flex items-center justify-center sm:justify-between gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border">
+            <span class="truncate">MÓDULO 3: Glucólisis</span>
+            <span id="badge-mod-2" class="hidden sm:inline-block text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-900/70 text-cyan-200">0/6</span>
+          </button>
+        </nav>
+
+        <!-- Indicadores de Sonido, Puntaje (0 a 100) y Avance Global -->
+        <div class="order-2 lg:order-3 flex items-center gap-2.5 shrink-0">
+          <!-- Botón activar/silenciar sonido -->
+          <button id="btn-sound-toggle" onclick="toggleSound()" title="Activar o silenciar efectos de sonido" class="p-2 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-950 transition-colors">
+            <i id="icon-sound" data-lucide="volume-2" class="w-4 h-4"></i>
+          </button>
+
+          <div class="hidden sm:flex items-center gap-2">
+            <div class="w-20 h-2 bg-slate-800 rounded-full overflow-hidden border border-cyan-500/20">
+              <div id="global-progress-bar" class="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <span id="global-progress-text" class="text-xs font-bold text-cyan-200 font-mono">0/15</span>
+          </div>
+
+          <div class="flex items-center gap-1.5 bg-amber-500/15 border border-amber-400/40 px-3 py-1.5 rounded-xl">
+            <i data-lucide="award" class="w-4 h-4 text-amber-300"></i>
+            <span class="text-xs font-semibold text-amber-100">Puntaje:</span>
+            <span id="global-score" class="text-xs sm:text-sm font-extrabold text-amber-300 font-mono">0 / 100</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenedor Principal Panorámico (ocupa todo el espacio vertical sin dejar huecos) -->
+  <main id="app-container" class="flex-1 min-h-0 max-w-7xl w-full mx-auto px-3 sm:px-5 py-2.5 flex flex-col">
+    <!-- Se renderiza dinámicamente mediante JS -->
+  </main>
+
+  <!-- Pie de página con Créditos y Licencia Creative Commons -->
+  <footer class="shrink-0 bg-slate-950/85 backdrop-blur-md border-t border-cyan-500/25 py-2 px-4">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs text-cyan-100/80">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-white">FISIOLOGÍA DEL EJERCICIO</span>
+        <span class="hidden sm:inline text-cyan-400/60">•</span>
+        <span class="hidden sm:inline text-cyan-200/75">Evaluación Interactiva</span>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <!-- Botón Créditos -->
+        <button onclick="openModal('credits')" class="px-3 py-1.5 rounded-lg bg-blue-900/70 hover:bg-blue-800 border border-cyan-400/35 text-cyan-100 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs">
+          <i data-lucide="users" class="w-3.5 h-3.5 text-cyan-300"></i>
+          <span>Créditos</span>
+        </button>
+
+        <!-- Botón Creative Commons -->
+        <button onclick="openModal('cc')" class="px-3 py-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-cyan-400/35 text-cyan-100 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs" title="Licencia Creative Commons CC BY-NC-SA 4.0">
+          <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-cyan-500/20 border border-cyan-400/50 text-cyan-200 font-mono text-[10px] font-extrabold">CC</span>
+          <span>Creative Commons</span>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal para Créditos y Creative Commons -->
+  <div id="info-modal" onclick="if(event.target===this) closeModal()" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4">
+    <div id="info-modal-content" class="blue-glass text-white max-w-lg w-full rounded-3xl p-6 border border-cyan-400/40 shadow-2xl animate-enter">
+      <!-- Contenido dinámico del modal -->
+    </div>
+  </div>
+
+  <!-- Lógica de la Aplicación -->
+  <script>
+    // =========================================================================
+    // SISTEMA DE EFECTOS DE SONIDO SINTETIZADOS CON TONE.JS / WEB AUDIO
+    // =========================================================================
+    const soundEngine = {
+      enabled: true,
+      initialized: false,
+      synth: null,
+      async ensureReady() {
+        if (!this.enabled) return false;
+        try {
+          if (window.Tone && Tone.context.state !== 'running') {
+            await Tone.start();
+          }
+          if (window.Tone && !this.synth) {
+            this.synth = new Tone.PolySynth(Tone.Synth, {
+              oscillator: { type: "triangle" },
+              envelope: { attack: 0.01, decay: 0.14, sustain: 0.08, release: 0.25 }
+            }).toDestination();
+            this.synth.volume.value = -8;
+          }
+          this.initialized = true;
+          return true;
+        } catch (e) {
+          return false;
+        }
+      },
+      async playClick() {
+        if (!this.enabled) return;
+        const ok = await this.ensureReady();
+        if (ok && this.synth) {
+          this.synth.triggerAttackRelease("C5", "32n");
+        }
+      },
+      async playSuccess() {
+        if (!this.enabled) return;
+        const ok = await this.ensureReady();
+        if (ok && this.synth) {
+          const now = Tone.now();
+          this.synth.triggerAttackRelease("C5", "16n", now);
+          this.synth.triggerAttackRelease("E5", "16n", now + 0.08);
+          this.synth.triggerAttackRelease("G5", "16n", now + 0.16);
+          this.synth.triggerAttackRelease("C6", "8n", now + 0.24);
+        }
+      },
+      async playError() {
+        if (!this.enabled) return;
+        const ok = await this.ensureReady();
+        if (ok && this.synth) {
+          const now = Tone.now();
+          this.synth.triggerAttackRelease("E3", "16n", now);
+          this.synth.triggerAttackRelease("Bb2", "8n", now + 0.12);
+        }
+      }
+    };
+
+    function toggleSound() {
+      soundEngine.enabled = !soundEngine.enabled;
+      const icon = document.getElementById("icon-sound");
+      if (icon) {
+        icon.setAttribute("data-lucide", soundEngine.enabled ? "volume-2" : "volume-x");
+        if (window.lucide) lucide.createIcons();
+      }
+      if (soundEngine.enabled) {
+        soundEngine.playClick();
+      }
+    }
+
+    // Listener global para sonido al presionar botones interactivos
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (btn && !btn.disabled && btn.id !== "btn-sound-toggle") {
+        soundEngine.playClick();
+      }
+    }, true);
+
+    // =========================================================================
+    // MODALES DE CRÉDITOS Y CREATIVE COMMONS
+    // =========================================================================
+    function openModal(type) {
+      const modal = document.getElementById("info-modal");
+      const content = document.getElementById("info-modal-content");
+      if (!modal || !content) return;
+
+      if (type === "credits") {
+        content.innerHTML = `
+          <div class="flex items-center justify-between pb-3 mb-4 border-b border-cyan-400/25">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300">
+                <i data-lucide="users" class="w-5 h-5"></i>
+              </div>
+              <h3 class="text-lg font-extrabold text-white">Créditos del Recurso</h3>
+            </div>
+            <button onclick="closeModal()" class="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-cyan-200">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <div class="space-y-4 text-sm">
+            <div class="p-3.5 rounded-2xl bg-slate-900/70 border border-cyan-400/25">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-cyan-300 block mb-1">Expertos temáticos</span>
+              <p class="font-bold text-white text-base">Maria Alejandra Camacho Villa</p>
+              <p class="font-bold text-white text-base">Adrián de la Rosa</p>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-slate-900/70 border border-cyan-400/25">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-cyan-300 block mb-1">Diseño y desarrollo interactivo</span>
+              <p class="font-bold text-white text-base">William Alarcón G.</p>
+            </div>
+          </div>
+          <div class="mt-5 flex justify-end">
+            <button onclick="closeModal()" class="px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs transition-colors">
+              Cerrar
+            </button>
+          </div>
+        `;
+      } else {
+        content.innerHTML = `
+          <div class="flex items-center justify-between pb-3 mb-4 border-b border-cyan-400/25">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-400/50 text-cyan-200 font-mono text-xs font-extrabold">CC BY-NC-SA 4.0</span>
+              <h3 class="text-lg font-extrabold text-white">Licencia Creative Commons</h3>
+            </div>
+            <button onclick="closeModal()" class="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-cyan-200">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <div class="space-y-3 text-xs sm:text-sm text-cyan-100/90 leading-relaxed">
+            <p class="font-bold text-white">Atribución - NoComercial - CompartirIgual 4.0 Internacional (CC BY-NC-SA 4.0)</p>
+            <p>Usted es libre de <strong>compartir</strong> (copiar y redistribuir el material en cualquier medio o formato) y <strong>adaptar</strong> (remezclar, transformar y construir a partir del material) bajo los siguientes términos:</p>
+            <ul class="space-y-1.5 pl-4 list-disc text-cyan-100/85">
+              <li><strong>Atribución (BY):</strong> Debe dar crédito adecuado a los autores originales (Maria Alejandra Camacho Villa, Adrián de la Rosa y William Alarcón G.).</li>
+              <li><strong>NoComercial (NC):</strong> No puede hacer uso del material con propósitos comerciales.</li>
+              <li><strong>CompartirIgual (SA):</strong> Si remezcla o transforma el material, debe distribuir su contribución bajo la misma licencia.</li>
+            </ul>
+          </div>
+          <div class="mt-5 flex justify-end">
+            <button onclick="closeModal()" class="px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs transition-colors">
+              Entendido
+            </button>
+          </div>
+        `;
+      }
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeModal() {
+      const modal = document.getElementById("info-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    // =========================================================================
+    // 0. DEFINICIÓN DE PERSONAJES Y RUTAS EN CARPETA img/ (Ale1, Car1, Adr1)
+    // =========================================================================
+    const CHARACTERS = {
+      ale1: {
+        id: "ale1",
+        prefix: "Ale",
+        name: "Profesora Alejandra",
+        shortName: "Prof. Alejandra",
+        role: "Fisiología del Ejercicio",
+        image: "img/Ale1.png",
+        accentBg: "bg-violet-950/60",
+        accentBorder: "border-violet-400/40",
+        accentText: "text-violet-100",
+        badgeBg: "bg-violet-600",
+        fallbackInitials: "AL",
+        welcomeQuote: "Te guiaré en la estructura molecular del ATP y su hidrólisis enzimática."
+      },
+      adr1: {
+        id: "adr1",
+        prefix: "Adr",
+        name: "Profesor Adrián",
+        shortName: "Prof. Adrián",
+        role: "Fisiología del Ejercicio",
+        image: "img/Adr1.png",
+        accentBg: "bg-emerald-950/60",
+        accentBorder: "border-emerald-400/40",
+        accentText: "text-emerald-100",
+        badgeBg: "bg-emerald-600",
+        fallbackInitials: "AD",
+        welcomeQuote: "Analizaremos juntos el sistema fosfagénico y la potencia en sprints repetidos."
+      },
+      car1: {
+        id: "car1",
+        prefix: "Car",
+        name: "Carolina",
+        shortName: "Carolina",
+        role: "Fisiología del Ejercicio",
+        image: "img/Car1.png",
+        accentBg: "bg-sky-950/60",
+        accentBorder: "border-sky-400/40",
+        accentText: "text-sky-100",
+        badgeBg: "bg-sky-600",
+        fallbackInitials: "CA",
+        welcomeQuote: "¡Exploraremos casos reales de glucólisis, GLUT4 y metabolismo del lactato!"
+      }
+    };
+
+    function renderCharacterImg(charKey, sizeClasses = "w-28 h-36 sm:w-36 sm:h-44", variantNum = 1) {
+      const c = CHARACTERS[charKey];
+      const imgSrc = `img/${c.prefix}${variantNum}.png`;
+      const defaultPng = `img/${c.prefix}1.png`;
+      return `
+        <div class="relative z-10 shrink-0 flex items-end justify-center overflow-visible ${sizeClasses}">
+          <img
+            src="${imgSrc}"
+            alt="${c.name} - ${c.role}"
+            class="w-full h-full object-contain object-bottom character-cutout"
+            onerror="if(!this.dataset.triedJpg){this.dataset.triedJpg='1'; this.src=this.src.replace('.png','.jpg');}else if(!this.dataset.triedBase && '${imgSrc}' !== '${defaultPng}'){this.dataset.triedBase='1'; this.dataset.triedJpg=''; this.src='${defaultPng}';}else{this.style.display='none'; this.nextElementSibling.style.display='flex';}"
+          />
+          <div style="display:none" class="w-24 h-24 rounded-2xl ${c.badgeBg} text-white font-extrabold text-xl items-center justify-center shadow-lg">
+            ${c.fallbackInitials}
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 1. BANCO DE DATOS EXACTO DE LOS 3 MÓDULOS (15 PREGUNTAS)
+    // =========================================================================
+    const MODULES = [
+      {
+        id: 0,
+        code: "MÓDULO 1",
+        title: "ATP",
+        subtitle: "Composición molecular, reacción enzimática y reservas inmediatas",
+        color: "indigo",
+        icon: "atom",
+        characterKey: "ale1",
+        questions: [
+          {
+            id: "m1_q1",
+            type: "atp_diagram",
+            characterTip: "¡Mira hacia el diagrama molecular! Identifica la base nitrogenada morada, el azúcar pentosa verde y la cadena naranja de tres fosfatos.",
+            prompt: "Arrastra o asigna cada componente del ATP a su nombre correspondiente.",
+            instruction: "Selecciona una etiqueta de abajo y haz clic en su zona correspondiente del diagrama (o arrástrala directamente).",
+            options: ["Adenina", "Ribosa", "Tres grupos fosfato"],
+            targets: [
+              { id: "adenina", label: "Doble anillo nitrogenado (izq.)", correct: "Adenina" },
+              { id: "ribosa", label: "Azúcar pentosa central", correct: "Ribosa" },
+              { id: "fosfatos", label: "Cadena de 3 fosfatos (der.)", correct: "Tres grupos fosfato" }
+            ],
+            explanation: "El ATP (Adenosín Trifosfato) está formado por una base nitrogenada (adenina, morada), un azúcar pentosa (ribosa, verde) y tres grupos fosfato (naranjas) unidos por enlaces de alta energía."
+          },
+          {
+            id: "m1_q2",
+            type: "equation",
+            characterTip: "Para liberar la energía del último enlace fosfato, necesitamos una molécula de agua y la acción catalítica de nuestra enzima específica.",
+            prompt: "Completa la reacción de hidrólisis del ATP.",
+            instruction: "Coloca cada ficha en los reactivos/enzima y en los productos de la reacción. (Los 4 productos finales pueden ubicarse en cualquier orden).",
+            bank: ["ADP", "AMP", "Pi", "H+", "ATP", "ATPasa", "H2O", "Energía"],
+            slots: [
+              { id: "reactant", label: "Reactivo", role: "reactant" },
+              { id: "enzyme", label: "Enzima", role: "enzyme" },
+              { id: "prod1", label: "Producto 1", role: "product" },
+              { id: "prod2", label: "Producto 2", role: "product" },
+              { id: "prod3", label: "Producto 3", role: "product" },
+              { id: "prod4", label: "Producto 4", role: "product" }
+            ],
+            correctReactant: "H2O",
+            correctEnzyme: "ATPasa",
+            correctProducts: ["ADP", "Pi", "H+", "Energía"],
+            explanation: "La hidrólisis del ATP requiere agua (H₂O) y es catalizada por la enzima ATPasa, escindiendo el enlace terminal para producir ADP, fosfato inorgánico (Pi), un protón (H⁺) y energía libre para la contracción."
+          },
+          {
+            id: "m1_q3",
+            type: "mcq",
+            characterTip: "Piensa en la fisiología real del músculo esquelético: el ATP almacenado libremente es apenas una chispa inicial antes de activar las vías de resíntesis.",
+            prompt: "Imagínate que quieres huir del ladrón que te persigue. Tu cuádriceps, tus isquiosurales, tus glúteos, tus gastrocnemios, tu tibial anterior y otros grupos musculares participan en la acción de huir. Sin embargo, las reservas de ATP en estos músculos son limitadas. ¿Durante cuántos segundos te alcanzará ese ATP en la huida?",
+            options: [
+              "6 segundos",
+              "Más de 10 segundos",
+              "1 segundo",
+              "Menos de 2 segundos",
+              "Hasta llegar a casa"
+            ],
+            correctIndex: 3,
+            explanation: "Los depósitos intramusculares de ATP libre son extremadamente reducidos (~5-6 mmol/kg de músculo húmedo), por lo que en un esfuerzo máximo apenas sostienen la contracción durante menos de 2 segundos."
+          },
+          {
+            id: "m1_q4",
+            type: "mcq",
+            characterTip: "Revisa los productos que acabas de balancear en la ecuación de hidrólisis: además del ADP y la energía, quedan dos iones libres en el sarcoplasma.",
+            prompt: "Durante la hidrólisis del ATP mediada por la ATPasa, además de ADP y energía, se liberan dos subproductos al sarcoplasma. ¿Cuáles son y cuál es su relevancia?",
+            options: [
+              "A) Glucosa y piruvato, que ingresan a la vía oxidativa.",
+              "B) Fosfato inorgánico y un ion de hidrógeno, importantes para futuras reacciones y el balance del pH celular.",
+              "C) AMP y lactato, encargados de frenar la contracción muscular.",
+              "D) Creatina libre y agua, que estabilizan la membrana muscular."
+            ],
+            correctIndex: 1,
+            explanation: "La ruptura hidrolítica del ATP libera fosfato inorgánico (Pi), reutilizable para fosforilar ADP, y un ion hidrógeno (H⁺), cuya acumulación influye directamente en el equilibrio ácido-base (pH) del sarcoplasma."
+          },
+          {
+            id: "m1_q5",
+            type: "mcq",
+            characterTip: "Si la célula acumulara kilos de ATP, sería demasiado pesada e ineficiente; por eso prioriza una resíntesis ultrarrápida.",
+            prompt: "En un esfuerzo muscular máximo, ¿por qué las reservas directas de ATP solo alcanzan para sostener 2 segundos o menos de trabajo?",
+            options: [
+              "A) El depósito celular de ATP es muy pequeño y limitado, lo que exige resintetizar de inmediato por medio de una vía metabólica.",
+              "B) La enzima ATPasa se satura rápidamente y deja de funcionar al segundo 2.",
+              "C) El ATP muscular se transforma de forma instantánea en lactato.",
+              "D) La falta transitoria de oxígeno inactiva los enlaces de adenosina."
+            ],
+            correctIndex: 0,
+            explanation: "La célula muscular no almacena grandes cantidades de ATP; en cambio, mantiene una concentración constante resintetizándolo a la misma velocidad que se consume mediante los sistemas energéticos."
+          }
+        ]
+      },
+      {
+        id: 1,
+        code: "MÓDULO 2",
+        title: "Vía Fosfagénica",
+        subtitle: "Resíntesis ultrarrápida de ATP, sprints repetidos y lanzadera de creatina",
+        color: "emerald",
+        icon: "flame",
+        characterKey: "adr1",
+        questions: [
+          {
+            id: "m2_q1",
+            type: "matching",
+            characterTip: "¡Atención en la pista! Observa cómo cae la fosfocreatina desde el primer sprint y cómo disminuye el porcentaje de rendimiento al acumular fatiga en los sprints 3 y 5.",
+            prompt: "Relacione cada elemento de la columna A con la opción correspondiente de la columna B.",
+            instruction: "Haz clic en un elemento de la Columna A y luego selecciona su pareja en la Columna B.",
+            colA: [
+              { id: "1", text: "1. El rendimiento va disminuyendo progresivamente." },
+              { id: "2", text: "2. Sprint 5" },
+              { id: "3", text: "3. La fosfocreatina muscular cayó cerca de un 50% de su valor inicial." },
+              { id: "4", text: "4. Sprint 3" }
+            ],
+            colB: [
+              { id: "A", text: "A. Primer sprint." },
+              { id: "B", text: "B. El tiempo de descanso no es suficiente para resintetizar completamente la fosfocreatina." },
+              { id: "C", text: "C. El rendimiento disminuyó un 18,2% respecto al inicio del ejercicio." },
+              { id: "D", text: "D. El rendimiento disminuyó un 27,3% respecto al inicio del ejercicio." }
+            ],
+            correctPairs: { "1": "B", "2": "D", "3": "A", "4": "C" },
+            explanation: "En sprints repetidos con pausas incompletas, tras el primer sprint la PCr cae ~50% (3-A). Al no recuperarse totalmente en los descansos (1-B), la potencia cae un 18,2% en el Sprint 3 (4-C) y un 27,3% en el Sprint 5 (2-D)."
+          },
+          {
+            id: "m2_q2",
+            type: "mcq",
+            characterTip: "Cuando suena el silbato para un arranque explosivo, la fosfocreatina actúa como donante inmediato de fosfato, pero no mueve directamente los puentes cruzados.",
+            prompt: "Durante un sprint máximo de pocos segundos, la fosfocreatina contribuye rápidamente a la resíntesis de ATP muscular. ¿Cuál de las siguientes opciones describe correctamente este proceso?",
+            options: [
+              "A) La PCr libera directamente energía para la contracción muscular sin participar en la resíntesis de ATP.",
+              "B) La PCr transfiere un grupo fosfato al ADP mediante la enzima creatina quinasa, permitiendo una rápida resíntesis de ATP.",
+              "C) La PCr se convierte en glucosa y posteriormente entra en la glucólisis para producir ATP.",
+              "D) La PCr entra en la mitocondria y es oxidada directamente para producir ATP."
+            ],
+            correctIndex: 1,
+            explanation: "La fosfocreatina (PCr) no alimenta directamente a la miosina; dona su grupo fosfato de alta energía al ADP en una sola reacción catalizada por la creatina quinasa (CK) para regenerar ATP al instante."
+          },
+          {
+            id: "m2_q3",
+            type: "mcq",
+            characterTip: "En esfuerzos máximos donde el ADP se dispara, entra en juego una enzima auxiliar clave que aprovecha dos moléculas de ADP.",
+            prompt: "Cuando el esfuerzo es muy intenso y se acumula gran cantidad de ADP, ¿qué reacción cataliza la adenilato kinasa para apoyar la vía fosfagénica?",
+            options: [
+              "A) Une una creatina libre con lactato dentro de la célula.",
+              "B) Transforma el glucógeno de reserva en glucosa circulante.",
+              "C) Une dos moléculas de ADP para generar un ATP y un AMP.",
+              "D) Fragmenta el ADP en grupos de fosfato libre."
+            ],
+            correctIndex: 2,
+            explanation: "La enzima adenilato kinasa (miokinasa) cataliza la reacción 2 ADP → ATP + AMP, proporcionando un respaldo inmediato de ATP cuando las reservas de PCr disminuyen y sube el ADP."
+          },
+          {
+            id: "m2_q4",
+            type: "mcq",
+            characterTip: "Durante la pausa de recuperación entre series, el deportista recarga su batería de PCr gracias a la conexión entre el sarcoplasma y la mitocondria.",
+            prompt: "Una vez que la fosfocreatina dona su grupo fosfato en el sarcoplasma, se transforma en creatina libre. ¿Qué ruta sigue para recargarse y volver a ser fosfocreatina?",
+            options: [
+              "A) Se elimina por la orina para impedir la sobrecarga metabólica.",
+              "B) Va a la mitocondria, donde la creatina kinasa mitocondrial la fosforila para enviarla de nuevo al sarcoplasma.",
+              "C) Se une al piruvato en el citosol para convertirse directamente en lactato.",
+              "D) Permanece inactiva en el sarcoplasma hasta que concluye la vía oxidativa."
+            ],
+            correctIndex: 1,
+            explanation: "Mediante la lanzadera de creatina, la creatina libre difunde hacia el espacio intermembrana mitocondrial, donde la creatina kinasa mitocondrial utiliza ATP oxidativo para refosforilarla a PCr."
+          }
+        ]
+      },
+      {
+        id: 2,
+        code: "MÓDULO 3",
+        title: "Glucólisis",
+        subtitle: "Glucólisis sarcoplásmica, transportadores GLUT4 y regeneración de NAD⁺",
+        color: "violet",
+        icon: "activity",
+        characterKey: "car1",
+        questions: [
+          {
+            id: "m3_q1",
+            type: "mcq",
+            characterTip: "¡A todos nos ha pasado correr para no perder clase! Analiza por qué después de los primeros 5 segundos de máxima velocidad el ritmo empieza a bajar.",
+            prompt: "Un martes a las 6:45 am, Luisa sale de su casa hacia la universidad para su clase de cálculo 1 en la sede central. Sin embargo, no es el día de Luisa. El bus acaba de pasar y tiene que correr varias cuadras para alcanzarlo; si no, llegará tarde. Luisa corre a máxima velocidad durante 20 segundos y, en los primeros 5 segundos, mantiene una intensidad constante. Sin embargo, a medida que sigue corriendo, nota que sus piernas pierden rapidez y se sienten pesadas. ¿Por qué disminuyó la intensidad (velocidad de contracción muscular) de la carrera de Luisa con el paso del tiempo?",
+            options: [
+              "A) La glucólisis asume el control de la resíntesis de ATP. Al tener más pasos enzimáticos que la vía fosfagénica, su tasa de resíntesis es más lenta.",
+              "B) El ATP intramuscular se agotó por completo, deteniendo la contracción.",
+              "C) El lactato acumulado destruyó las fibras musculares.",
+              "D) La vía oxidativa mitocondrial se apagó por falta de oxígeno."
+            ],
+            correctIndex: 0,
+            explanation: "Al agotarse la fosfocreatina tras los primeros segundos, la glucólisis pasa a dominar la producción de ATP. Al constar de 10-11 reacciones enzimáticas sucesivas, su potencia (tasa de resíntesis por segundo) es menor que la del sistema fosfagénico, reduciendo la velocidad máxima."
+          },
+          {
+            id: "m3_q2",
+            type: "mcq",
+            characterTip: "¡Ojo con los mitos sobre el lactato! En fisiología del ejercicio sabemos que el lactato no es un villano, sino un aliado para sostener la glucólisis.",
+            prompt: "Diego está en modo fitness desde hace unas semanas, pues se ha estado ejercitando por su cuenta en casa y en el gimnasio de la UIS. Durante una sesión de entrenamiento, decide realizar 20 flexiones de codo acostado a máxima velocidad, completándolas en 25 segundos. Durante este esfuerzo, aumenta la actividad de la vía glucolítica y parte del piruvato producido en el sarcoplasma se transforma en lactato.\n\nCon respecto a esta reacción metabólica y su importancia fisiológica durante el ejercicio de alta intensidad, considere las siguientes afirmaciones:\nI. La reacción es catalizada por la enzima lactato deshidrogenasa, que permite la conversión de piruvato en lactato.\nII. La formación de lactato tiene como función inducir la fatiga muscular para detener la contracción del músculo.\nIII. La conversión de piruvato en lactato permite inactivar la vía glucolítica para ahorrar energía citoplasmática.\nIV. Esta reacción permite regenerar NAD+ a partir de NADH, favoreciendo la continuidad de la glucólisis y la producción de ATP.\n\nSeleccione la respuesta correcta:",
+            options: [
+              "A) Si I y II son correctas.",
+              "B) Si II y III son correctas.",
+              "C) Si III y IV son correctas.",
+              "D) Si I y IV son correctas."
+            ],
+            correctIndex: 3,
+            explanation: "Solo I y IV son verdaderas: la lactato deshidrogenasa (LDH) reduce el piruvato a lactato oxidando NADH a NAD⁺. Este NAD⁺ es indispensable para que la gliceraldehído-3-fosfato deshidrogenasa mantenga activa la glucólisis."
+          },
+          {
+            id: "m3_q3",
+            type: "mcq",
+            characterTip: "¡Vamos súper bien! Ubica el compartimento celular exacto donde ocurre toda la cascada glucolítica antes de entrar a la mitocondria.",
+            prompt: "Vamos a pensar un poco en la magia que ocurre dentro de la célula muscular durante el ejercicio, y responde lo siguiente: ¿En qué parte de la célula muscular se llevan a cabo las reacciones enzimáticas de la vía glucolítica?",
+            options: [
+              "A) En el interior de la matriz mitocondrial.",
+              "B) En el sarcoplasma celular.",
+              "C) En el espacio intermembrana mitocondrial.",
+              "D) En el retículo sarcoplásmico."
+            ],
+            correctIndex: 1,
+            explanation: "Todas las enzimas de la glucólisis se encuentran disueltas en el sarcoplasma (citoplasma de la fibra muscular), lo que permite una activación rápida sin depender de transporte mitocondrial."
+          },
+          {
+            id: "m3_q4",
+            type: "fill_blanks",
+            characterTip: "Compara la capacidad frente a la velocidad: aunque la glucólisis produce bastante ATP en el citoplasma muscular, tiene más reacciones encadenadas.",
+            prompt: "Lleva la palabra correcta hacia el espacio:",
+            instruction: "Selecciona una palabra del banco y haz clic en el espacio correspondiente (o arrástrala).",
+            segments: [
+              "Aunque la vía glucolítica resintetiza una gran cantidad de ATP en el ",
+              { id: "b1", answer: "sarcoplasma", label: "Espacio 1" },
+              ", su velocidad de resíntesis es menor que la de la vía ",
+              { id: "b2", answer: "fosfagénica", label: "Espacio 2" },
+              ". Esto ocurre porque la glucólisis consta de un mayor número de ",
+              { id: "b3", answer: "pasos", label: "Espacio 3" },
+              " enzimáticos intermedios."
+            ],
+            bank: ["sarcoplasma", "mitocondria", "ARN", "fosfagénica", "glucolítica", "oxidativa", "pasos"],
+            explanation: "La glucólisis ocurre en el sarcoplasma y ofrece gran capacidad total de ATP, pero es más lenta que la vía fosfagénica debido a su mayor cantidad de pasos enzimáticos intermedios."
+          },
+          {
+            id: "m3_q5",
+            type: "fill_blanks",
+            characterTip: "En rehabilitación y entrenamiento este concepto es clave: el propio movimiento muscular abre las puertas a la glucosa sin necesitar hormonas.",
+            prompt: "Lleva la palabra correcta hacia el espacio:",
+            instruction: "Completa el mecanismo de captación de glucosa durante el ejercicio intenso.",
+            segments: [
+              "Durante la contracción muscular intensa, el ingreso de glucosa sanguínea al sarcoplasma es facilitado por el transportador ",
+              { id: "b1", answer: "GLUT4", label: "Espacio 1" },
+              ", el cual se desplaza hacia la membrana celular estimulado por el trabajo mecánico de la ",
+              { id: "b2", answer: "contracción", label: "Espacio 2" },
+              ", de manera totalmente independiente de la ",
+              { id: "b3", answer: "insulina", label: "Espacio 3" },
+              "."
+            ],
+            bank: ["GLUT4", "MCT4", "contracción", "desplazamiento", "ph", "insulina", "ATP"],
+            explanation: "La propia contracción muscular (aumento de Ca²⁺ y AMPK) estimula la translocación de vesículas con transportadores GLUT4 hacia el sarcolema sin requerir insulina."
+          },
+          {
+            id: "m3_q6",
+            type: "matching",
+            characterTip: "¡Último reto de la evaluación! Integra los cuatro elementos clave de la bioenergética muscular para cerrar con broche de oro.",
+            prompt: "Relaciona las columnas:",
+            instruction: "Empareja cada concepto de la Columna A con su definición fisiológica en la Columna B.",
+            colA: [
+              { id: "1", text: "1. Sarcoplasma" },
+              { id: "2", text: "2. Glucosa libre" },
+              { id: "3", text: "3. Piruvato" },
+              { id: "4", text: "4. ATP" }
+            ],
+            colB: [
+              { id: "A", text: "[A] Molécula energética principal que utiliza la fibra muscular para la contracción." },
+              { id: "B", text: "[B] Lugar de la célula muscular donde ocurren todas las reacciones de la glucólisis." },
+              { id: "C", text: "[C] Sustrato energético que ingresa a la célula desde el torrente sanguíneo." },
+              { id: "D", text: "[D] Producto metabólico final de la vía glucolítica antes de convertirse en lactato." }
+            ],
+            correctPairs: { "1": "B", "2": "C", "3": "D", "4": "A" },
+            explanation: "El sarcoplasma aloja la glucólisis (1-B); la glucosa libre entra desde la sangre (2-C); el piruvato es el producto final antes de lactato o acetil-CoA (3-D); y el ATP es la moneda energética directa (4-A)."
+          }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // 2. ESTADO GLOBAL DE LA APLICACIÓN
+    // =========================================================================
+    const state = {
+      view: "home", // "home" | "quiz" | "module_summary" | "final_summary"
+      currentModuleIdx: 0,
+      currentQuestionIdx: 0,
+      selectedToken: null, // Para selección táctil/clic antes de colocar en destino
+      answers: {},         // Respuestas en curso por id de pregunta
+      results: {}          // Resultados validados { isCorrect: boolean }
+    };
+
+    // =========================================================================
+    // 3. UTILIDADES DE PROGRESO Y NAVEGACIÓN
+    // =========================================================================
+    function getTotalQuestions() {
+      return MODULES.reduce((acc, m) => acc + m.questions.length, 0);
+    }
+
+    function getAnsweredCount() {
+      return Object.keys(state.results).length;
+    }
+
+    function getCorrectCount() {
+      return Object.values(state.results).filter(r => r.isCorrect).length;
+    }
+
+    function getNormalizedScore() {
+      const totalQ = getTotalQuestions();
+      if (!totalQ) return 0;
+      return Math.round((getCorrectCount() / totalQ) * 100);
+    }
+
+    function getPointsPerQuestion() {
+      const totalQ = getTotalQuestions();
+      return totalQ ? (100 / totalQ).toFixed(1).replace('.0', '') : 0;
+    }
+
+    function getModuleStats(modIdx) {
+      const mod = MODULES[modIdx];
+      let answered = 0;
+      let correct = 0;
+      mod.questions.forEach(q => {
+        if (state.results[q.id]) {
+          answered++;
+          if (state.results[q.id].isCorrect) correct++;
+        }
+      });
+      return { total: mod.questions.length, answered, correct };
+    }
+
+    function goHome() {
+      state.view = "home";
+      state.selectedToken = null;
+      render();
+    }
+
+    function selectModule(modIdx, qIdx = 0) {
+      state.currentModuleIdx = modIdx;
+      state.currentQuestionIdx = qIdx;
+      state.view = "quiz";
+      state.selectedToken = null;
+      render();
+    }
+
+    function prevStep() {
+      state.selectedToken = null;
+      if (state.currentQuestionIdx > 0) {
+        state.currentQuestionIdx--;
+        render();
+      } else {
+        goHome();
+      }
+    }
+
+    function nextStep() {
+      state.selectedToken = null;
+      const mod = MODULES[state.currentModuleIdx];
+      if (state.currentQuestionIdx < mod.questions.length - 1) {
+        state.currentQuestionIdx++;
+        render();
+      } else {
+        state.view = "module_summary";
+        render();
+      }
+    }
+
+    function resetModule(modIdx) {
+      const mod = MODULES[modIdx];
+      mod.questions.forEach(q => {
+        delete state.results[q.id];
+        delete state.answers[q.id];
+      });
+      selectModule(modIdx, 0);
+    }
+
+    function resetAll() {
+      state.answers = {};
+      state.results = {};
+      state.selectedToken = null;
+      selectModule(0, 0);
+    }
+
+    function showToast(msg) {
+      const existing = document.getElementById("custom-toast");
+      if (existing) existing.remove();
+      const toast = document.createElement("div");
+      toast.id = "custom-toast";
+      toast.className = "fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs sm:text-sm font-semibold flex items-center gap-2 animate-enter";
+      toast.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 text-amber-400"></i><span>${msg}</span>`;
+      document.body.appendChild(toast);
+      if (window.lucide) lucide.createIcons();
+      setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+      }, 2800);
+    }
+
+    // =========================================================================
+    // 4. ACTUALIZACIÓN DE BARRA SUPERIOR Y PESTAÑAS
+    // =========================================================================
+    function updateHeaderUI() {
+      const totalQ = getTotalQuestions();
+      const answered = getAnsweredCount();
+      const score100 = getNormalizedScore();
+      const pct = Math.round((answered / totalQ) * 100);
+
+      const bar = document.getElementById("global-progress-bar");
+      const text = document.getElementById("global-progress-text");
+      const score = document.getElementById("global-score");
+
+      if (bar) bar.style.width = `${pct}%`;
+      if (text) text.textContent = `${answered}/${totalQ}`;
+      if (score) score.textContent = `${score100} / 100`;
+
+      MODULES.forEach((mod, idx) => {
+        const btn = document.getElementById(`nav-mod-${idx}`);
+        const badge = document.getElementById(`badge-mod-${idx}`);
+        const stats = getModuleStats(idx);
+
+        if (badge) {
+        badge.textContent = `${stats.correct}/${stats.total}`;
+        badge.className = stats.answered === stats.total && stats.total > 0
+          ? "hidden sm:inline-block text-[11px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/25 text-emerald-200 font-bold"
+          : "hidden sm:inline-block text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-900/70 text-cyan-200";
+      }
+
+      if (btn) {
+        const isActive = state.view !== "home" && state.currentModuleIdx === idx;
+        btn.className = isActive
+          ? "flex items-center justify-center sm:justify-between gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border border-cyan-400 bg-cyan-500/25 text-white shadow-sm shadow-cyan-500/20"
+          : "flex items-center justify-center sm:justify-between gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all border border-cyan-500/20 bg-slate-900/60 text-cyan-100/80 hover:bg-slate-800/80 hover:text-white";
+      }
+    });
+  }
+
+  // =========================================================================
+  // 5. RENDERIZADO PRINCIPAL Y VISTA DE INICIO (PROTAGONISMO Y SIN HUECOS)
+  // =========================================================================
+  function render() {
+    updateHeaderUI();
+    const container = document.getElementById("app-container");
+    if (!container) return;
+
+    if (state.view === "home") {
+      container.innerHTML = renderHomeView();
+    } else if (state.view === "quiz") {
+      container.innerHTML = renderQuizView();
+    } else if (state.view === "module_summary") {
+      container.innerHTML = renderModuleSummaryView();
+    } else if (state.view === "final_summary") {
+      container.innerHTML = renderFinalSummaryView();
+    }
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function renderHomeView() {
+    const totalQ = getTotalQuestions();
+    const totalAnswered = getAnsweredCount();
+
+    const cardsHTML = MODULES.map((mod, idx) => {
+      const stats = getModuleStats(idx);
+      const pct = Math.round((stats.answered / stats.total) * 100);
+      const mentor = CHARACTERS[mod.characterKey];
+      const colorMap = {
+        indigo: { badge: "bg-violet-500/25 text-violet-200 border-violet-400/40", bar: "bg-violet-400", btn: "bg-violet-600 hover:bg-violet-500" },
+        emerald: { badge: "bg-emerald-500/25 text-emerald-200 border-emerald-400/40", bar: "bg-emerald-400", btn: "bg-emerald-600 hover:bg-emerald-500" },
+        violet: { badge: "bg-sky-500/25 text-sky-200 border-sky-400/40", bar: "bg-sky-400", btn: "bg-sky-600 hover:bg-sky-500" }
+      }[mod.color];
+
+      return `
+        <div class="blue-glass rounded-2xl p-4 flex flex-col justify-between hover:border-cyan-400/60 transition-all h-full">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold tracking-wide border ${colorMap.badge}">
+                ${mod.code}
+              </span>
+              <span class="text-xs font-mono font-bold text-cyan-200">${stats.correct}/${stats.total} aciertos</span>
+            </div>
+
+            <!-- Mentor asignado con mayor presencia -->
+            <div class="flex items-end gap-3 px-3 pt-2 pb-0 rounded-2xl bg-slate-950/55 border border-cyan-500/25 mb-3">
+              ${renderCharacterImg(mod.characterKey, "w-20 h-24 sm:w-24 sm:h-28")}
+              <div class="pb-2.5 min-w-0 flex-1">
+                <p class="text-sm font-extrabold text-white truncate">${mentor.name}</p>
+                <p class="text-xs text-cyan-100/80 line-clamp-2 leading-snug mt-0.5">${mod.subtitle}</p>
+              </div>
+            </div>
+
+            <h3 class="text-base sm:text-lg font-extrabold text-white mb-2">${mod.code}: ${mod.title}</h3>
+          </div>
+
+          <div class="pt-1">
+            <div class="mb-3">
+              <div class="flex justify-between text-xs font-semibold text-cyan-200/80 mb-1">
+                <span>Progreso del módulo</span>
+                <span class="font-mono">${pct}%</span>
+              </div>
+              <div class="w-full h-2 bg-slate-900/90 rounded-full overflow-hidden border border-cyan-500/20">
+                <div class="h-full ${colorMap.bar} transition-all duration-500" style="width: ${pct}%"></div>
+              </div>
+            </div>
+            <button onclick="selectModule(${idx}, 0)" class="w-full py-2.5 px-4 rounded-xl text-white font-extrabold text-xs sm:text-sm ${colorMap.btn} transition-all flex items-center justify-center gap-2 shadow-md">
+              <span>${stats.answered === 0 ? 'Comenzar Módulo' : (stats.answered === stats.total ? 'Repasar Módulo' : 'Continuar Módulo')}</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="animate-enter flex-1 min-h-0 w-full flex flex-col justify-between gap-3">
+        <!-- Franja Superior Panorámica Azul con Gran Protagonismo de Personajes -->
+        <div class="blue-glass rounded-3xl px-5 sm:px-7 pt-4 pb-0 text-white shrink-0">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+            <div class="lg:col-span-6 pb-4">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-200 text-xs font-bold uppercase tracking-wider mb-2.5">
+                <span>FISIOLOGÍA DEL EJERCICIO • 15 Retos • Escala 0 a 100</span>
+              </div>
+              <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight mb-2 text-white leading-tight">
+                Domina los Sistemas Energéticos del Músculo
+              </h2>
+              <p class="text-cyan-100/90 text-xs sm:text-sm lg:text-base leading-relaxed mb-4">
+                Acompaña a la <strong>profesora Alejandra</strong>, el <strong>profesor Adrián</strong> y <strong>Carolina</strong> en esta evaluación interactiva sobre el ATP, la vía fosfagénica y la glucólisis.
+              </p>
+              <div class="flex flex-wrap items-center gap-3">
+                <button onclick="selectModule(0, 0)" class="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-sm transition-all shadow-lg shadow-cyan-500/25 flex items-center gap-2">
+                  <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                  <span>${totalAnswered > 0 ? 'Continuar Evaluación' : 'Iniciar Evaluación Completa'}</span>
+                </button>
+                ${totalAnswered === totalQ ? `
+                  <button onclick="state.view='final_summary'; render();" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-cyan-300/40 font-bold text-sm transition-all flex items-center gap-2">
+                    <i data-lucide="trophy" class="w-4 h-4 text-amber-300"></i>
+                    <span>Ver Reporte Final</span>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Vitrina Grande de los 3 Personajes con Protagonismo -->
+            <div class="lg:col-span-6 flex items-end justify-center gap-3 sm:gap-5 px-2 pt-1">
+              <div class="flex flex-col items-center">
+                ${renderCharacterImg("ale1", "w-32 h-44 sm:w-40 sm:h-52 lg:w-44 lg:h-56")}
+                <span class="relative z-20 text-[11px] font-extrabold bg-violet-600 text-white px-3 py-1 rounded-t-lg shadow-md -mt-2">Prof. Alejandra • M1</span>
+              </div>
+              <div class="flex flex-col items-center">
+                ${renderCharacterImg("adr1", "w-36 h-48 sm:w-44 sm:h-56 lg:w-48 lg:h-60")}
+                <span class="relative z-20 text-[11px] font-extrabold bg-emerald-600 text-white px-3 py-1 rounded-t-lg shadow-md -mt-2">Prof. Adrián • M2</span>
+              </div>
+              <div class="flex flex-col items-center">
+                ${renderCharacterImg("car1", "w-32 h-44 sm:w-40 sm:h-52 lg:w-44 lg:h-56")}
+                <span class="relative z-20 text-[11px] font-extrabold bg-sky-600 text-white px-3 py-1 rounded-t-lg shadow-md -mt-2">Carolina • M3</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Tarjetas de Módulos ocupando el resto de la altura -->
+        <div class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-3 gap-3.5 items-stretch">
+          ${cardsHTML}
+        </div>
+      </div>
+    `;
+  }
+
+  // --- VISTA DE PREGUNTA ACTIVA EN DOS COLUMNAS HORIZONTALES (ESTILO AZUL + PERSONAJE GRANDE) ---
+  function renderQuizView() {
+    const mod = MODULES[state.currentModuleIdx];
+    const q = mod.questions[state.currentQuestionIdx];
+    const submitted = state.results[q.id];
+    const mentor = CHARACTERS[mod.characterKey];
+
+    // Paginador de bolitas por pregunta dentro del módulo
+    const dotsHTML = mod.questions.map((item, idx) => {
+      const res = state.results[item.id];
+      const isCurrent = idx === state.currentQuestionIdx;
+      let classes = "w-8 h-8 rounded-lg text-xs font-extrabold font-mono flex items-center justify-center transition-all border ";
+      if (isCurrent) {
+        classes += "border-cyan-400 bg-cyan-500 text-slate-950 shadow-md scale-105";
+      } else if (res) {
+        classes += res.isCorrect
+          ? "border-emerald-400/60 bg-emerald-500/25 text-emerald-200 hover:bg-emerald-500/35"
+          : "border-rose-400/60 bg-rose-500/25 text-rose-200 hover:bg-rose-500/35";
+      } else {
+        classes += "border-cyan-500/25 bg-slate-900/70 text-cyan-200/80 hover:bg-slate-800";
+      }
+      return `<button onclick="selectModule(${state.currentModuleIdx}, ${idx})" class="${classes}" title="Pregunta ${idx + 1}">${idx + 1}</button>`;
+    }).join("");
+
+    // Renderizar cuerpo según tipo de pregunta
+    let questionBodyHTML = "";
+    if (q.type === "atp_diagram") {
+      questionBodyHTML = renderATPDiagramQuestion(q, submitted);
+    } else if (q.type === "equation") {
+      questionBodyHTML = renderEquationQuestion(q, submitted);
+    } else if (q.type === "mcq") {
+      questionBodyHTML = renderMCQQuestion(q, submitted);
+    } else if (q.type === "matching") {
+      questionBodyHTML = renderMatchingQuestion(q, submitted);
+    } else if (q.type === "fill_blanks") {
+      questionBodyHTML = renderFillBlanksQuestion(q, submitted);
+    }
+
+    // Retroalimentación pedagógica
+    let feedbackHTML = "";
+    if (submitted) {
+      feedbackHTML = `
+        <div class="mt-3 rounded-xl p-3.5 border ${submitted.isCorrect ? 'bg-emerald-50 border-emerald-400 text-emerald-950' : 'bg-rose-50 border-rose-400 text-rose-950'} animate-enter">
+          <div class="flex items-start gap-2.5">
+            <i data-lucide="${submitted.isCorrect ? 'check-circle-2' : 'alert-circle'}" class="w-5 h-5 shrink-0 mt-0.5 ${submitted.isCorrect ? 'text-emerald-600' : 'text-rose-600'}"></i>
+            <div class="text-xs sm:text-sm leading-snug">
+              <span class="font-extrabold block mb-0.5">
+                ${submitted.isCorrect ? `¡Correcto! ${mentor.shortName} confirma tu acierto (+${getPointsPerQuestion()} pts)` : `${mentor.shortName} te sugiere revisar este concepto:`}
+              </span>
+              <span class="opacity-95">${q.explanation}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const isLastInModule = state.currentQuestionIdx === mod.questions.length - 1;
+
+    return `
+      <div class="animate-enter flex-1 min-h-0 w-full flex flex-col gap-2.5">
+        <!-- Barra superior de control del módulo -->
+        <div class="blue-glass rounded-2xl px-4 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
+          <div class="flex items-center gap-2.5">
+            <span class="px-3 py-1 rounded-lg bg-cyan-500/20 border border-cyan-400/40 text-cyan-200 text-xs font-extrabold uppercase tracking-wider">
+              ${mod.code}: ${mod.title}
+            </span>
+            <span class="text-xs sm:text-sm text-cyan-100 font-semibold">Pregunta ${state.currentQuestionIdx + 1} de ${mod.questions.length}</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            ${dotsHTML}
+          </div>
+        </div>
+
+        <!-- Layout Panorámico de 2 Columnas ocupando toda la altura disponible -->
+        <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
+          <!-- COLUMNA IZQUIERDA (5 cols): Dedicada exclusivamente al personaje ampliado (+100 px) -->
+          <div class="lg:col-span-5 blue-glass rounded-3xl p-4 sm:p-5 flex flex-col items-center justify-center text-center text-white overflow-visible">
+            <div class="w-full h-full flex flex-col items-center justify-center text-center ${mentor.accentBg} border ${mentor.accentBorder} rounded-2xl p-3 sm:p-4 overflow-visible">
+              ${renderCharacterImg(mod.characterKey, "w-[320px] h-[390px] sm:w-[360px] sm:h-[430px] lg:w-[390px] lg:h-[460px]", state.currentQuestionIdx + 1)}
+              <div class="relative z-30 -mt-5 w-full flex flex-col items-center">
+                <div class="inline-flex flex-wrap items-center justify-center gap-1.5 px-3.5 py-1 rounded-xl bg-slate-950/90 border border-white/25 shadow-xl mb-1.5 backdrop-blur-md">
+                  <span class="px-2 py-0.5 rounded-md ${mentor.badgeBg} text-white text-xs font-extrabold uppercase tracking-wide">
+                    ${mentor.shortName}
+                  </span>
+                  <span class="text-[11px] font-semibold text-white/90">${mentor.role}</span>
+                </div>
+                <p class="text-xs sm:text-sm ${mentor.accentText} leading-snug font-medium max-w-md">
+                  “${q.characterTip}”
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- COLUMNA DERECHA (7 cols): Enunciado arriba, Zona Interactiva, Retroalimentación y Controles -->
+          <div class="lg:col-span-7 work-panel text-slate-800 rounded-3xl p-4 sm:p-5 flex flex-col justify-between overflow-hidden">
+            <div class="overflow-y-auto pr-1 flex-1 flex flex-col justify-between gap-3">
+              <!-- Enunciado e instrucciones arriba de las opciones de respuesta -->
+              <div class="shrink-0 pb-2.5 border-b border-slate-200">
+                <h2 class="text-sm sm:text-base lg:text-[17px] font-extrabold text-slate-900 leading-snug whitespace-pre-line">${q.prompt}</h2>
+                ${q.instruction ? `
+                  <p class="text-xs text-indigo-900 font-medium mt-2 flex items-start gap-2 bg-indigo-50/90 border border-indigo-200 rounded-xl px-3 py-2">
+                    <i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5 text-indigo-600"></i>
+                    <span>${q.instruction}</span>
+                  </p>
+                ` : ''}
+              </div>
+
+              <!-- Área interactiva de opciones / diagramas -->
+              <div class="flex-1 flex flex-col justify-center">
+                ${questionBodyHTML}
+                ${feedbackHTML}
+              </div>
+            </div>
+
+            <!-- Barra Inferior de Acción con botones más amplios -->
+            <div class="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">
+              <button onclick="prevStep()" class="px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-slate-700 hover:bg-slate-100 font-extrabold text-xs sm:text-sm flex items-center gap-2 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>${state.currentQuestionIdx === 0 ? 'Inicio' : 'Anterior'}</span>
+              </button>
+
+              <div class="flex items-center gap-2.5 ml-auto">
+                ${!submitted ? `
+                  <button onclick="validateCurrentQuestion()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span>Comprobar Respuesta</span>
+                  </button>
+                ` : `
+                  <button onclick="nextStep()" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center gap-2">
+                    <span>${isLastInModule ? 'Ver Resultados del Módulo' : 'Siguiente Pregunta'}</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // =========================================================================
+  // 6. COMPONENTES INTERACTIVOS POR TIPO DE PREGUNTA
+  // =========================================================================
+
+    // --- 6.1 DIAGRAMA INTERACTIVO DEL ATP (M1 Q1) ---
+    function getATPState(qId) {
+      if (!state.answers[qId]) {
+        state.answers[qId] = { adenina: null, ribosa: null, fosfatos: null };
+      }
+      return state.answers[qId];
+    }
+
+    function selectATPToken(val) {
+      state.selectedToken = state.selectedToken === val ? null : val;
+      render();
+    }
+
+    function assignATPTarget(qId, targetId) {
+      if (state.results[qId]) return;
+      const ans = getATPState(qId);
+
+      if (state.selectedToken) {
+        // Quitar el token si ya estaba en otro destino
+        Object.keys(ans).forEach(k => {
+          if (ans[k] === state.selectedToken) ans[k] = null;
+        });
+        ans[targetId] = state.selectedToken;
+        state.selectedToken = null;
+        render();
+      } else if (ans[targetId]) {
+        // Si toca un destino ocupado sin token seleccionado, lo libera
+        ans[targetId] = null;
+        render();
+      } else {
+        showToast("Primero selecciona una etiqueta de abajo o arrástrala aquí.");
+      }
+    }
+
+    function handleATPDragStart(e, val) {
+      e.dataTransfer.setData("text/plain", val);
+    }
+
+    function handleATPDrop(e, qId, targetId) {
+      e.preventDefault();
+      if (state.results[qId]) return;
+      const val = e.dataTransfer.getData("text/plain");
+      if (!val) return;
+      const ans = getATPState(qId);
+      Object.keys(ans).forEach(k => {
+        if (ans[k] === val) ans[k] = null;
+      });
+      ans[targetId] = val;
+      state.selectedToken = null;
+      render();
+    }
+
+    function renderATPDiagramQuestion(q, submitted) {
+      const ans = getATPState(q.id);
+      const usedValues = Object.values(ans).filter(Boolean);
+
+      const renderDropZone = (targetObj) => {
+        const val = ans[targetObj.id];
+        let borderClass = "border-dashed border-slate-300 bg-slate-50/80 text-slate-500 hover:border-indigo-400";
+        if (submitted) {
+          const isOk = val === targetObj.correct;
+          borderClass = isOk
+            ? "border-solid border-emerald-500 bg-emerald-50 text-emerald-900 font-bold"
+            : "border-solid border-rose-500 bg-rose-50 text-rose-900 font-bold";
+        } else if (val) {
+          borderClass = "border-solid border-indigo-500 bg-indigo-50 text-indigo-900 font-bold shadow-xs";
+        } else if (state.selectedToken) {
+          borderClass = "border-dashed border-indigo-400 bg-indigo-50/40 text-indigo-700 animate-pulse";
+        }
+
+        return `
+          <div
+            onclick="assignATPTarget('${q.id}', '${targetObj.id}')"
+            ondragover="event.preventDefault()"
+            ondrop="handleATPDrop(event, '${q.id}', '${targetObj.id}')"
+            class="cursor-pointer rounded-xl border-2 p-3 text-center transition-all min-h-[54px] flex flex-col items-center justify-center ${borderClass}"
+          >
+            <span class="text-[11px] uppercase tracking-wider opacity-70 block">${targetObj.label}</span>
+            <span class="text-xs sm:text-sm mt-0.5">${val || "Toca o suelta aquí"}</span>
+            ${submitted && val !== targetObj.correct ? `<span class="text-[11px] text-emerald-700 font-semibold mt-1">Correcto: ${targetObj.correct}</span>` : ""}
+          </div>
+        `;
+      };
+
+      const chipsHTML = q.options.map(opt => {
+        const isUsed = usedValues.includes(opt);
+        const isSelected = state.selectedToken === opt;
+        return `
+          <button
+            type="button"
+            draggable="${!submitted && !isUsed}"
+            ondragstart="handleATPDragStart(event, '${opt}')"
+            onclick="selectATPToken('${opt}')"
+            ${submitted ? "disabled" : ""}
+            class="no-select px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm border transition-all ${
+              isSelected
+                ? "bg-indigo-600 text-white border-indigo-600 chip-selected"
+                : isUsed
+                ? "bg-slate-100 text-slate-400 border-slate-200 opacity-60"
+                : "bg-white text-slate-800 border-slate-300 hover:border-indigo-500 shadow-xs"
+            }"
+          >
+            ${opt}
+          </button>
+        `;
+      }).join("");
+
+      return `
+        <div class="space-y-3">
+          <!-- Diagrama Vectorial Compacto de la Molécula de ATP -->
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col items-center">
+            <svg viewBox="0 0 640 215" class="w-full max-w-lg h-auto max-h-36" role="img" aria-label="Diagrama molecular del ATP">
+              <!-- Enlace Adenina - Ribosa -->
+              <line x1="175" y1="110" x2="225" y2="140" stroke="#94a3b8" stroke-width="5" stroke-linecap="round" />
+              <!-- Enlace Ribosa - Fosfato 1 -->
+              <line x1="315" y1="140" x2="365" y2="140" stroke="#94a3b8" stroke-width="5" stroke-linecap="round" />
+              <!-- Enlaces de alta energía entre Fosfatos -->
+              <line x1="425" y1="140" x2="465" y2="140" stroke="#ea580c" stroke-width="5" />
+              <line x1="525" y1="140" x2="565" y2="140" stroke="#ea580c" stroke-width="5" />
+
+              <!-- Grupo Adenina (Doble anillo morado) -->
+              <g onclick="assignATPTarget('${q.id}', 'adenina')" class="cursor-pointer">
+                <polygon points="75,40 125,25 165,60 150,110 95,110" fill="#8b5cf6" stroke="#5b21b6" stroke-width="3" />
+                <polygon points="150,110 165,60 205,75 205,115 175,130" fill="#7c3aed" stroke="#5b21b6" stroke-width="3" />
+                <text x="135" y="77" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">N / C</text>
+                <text x="135" y="16" text-anchor="middle" fill="#5b21b6" font-size="12" font-weight="800">Base Nitrogenada</text>
+              </g>
+
+              <!-- Grupo Ribosa (Pentágono verde) -->
+              <g onclick="assignATPTarget('${q.id}', 'ribosa')" class="cursor-pointer">
+                <polygon points="270,95 320,127 302,183 238,183 220,127" fill="#22c55e" stroke="#15803d" stroke-width="3" />
+                <text x="270" y="148" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">C₅H₁₀O₅</text>
+                <text x="270" y="205" text-anchor="middle" fill="#15803d" font-size="12" font-weight="800">Azúcar Pentosa</text>
+              </g>
+
+              <!-- Tres Grupos Fosfato (Círculos naranjas) -->
+              <g onclick="assignATPTarget('${q.id}', 'fosfatos')" class="cursor-pointer">
+                <circle cx="395" cy="140" r="28" fill="#f97316" stroke="#c2410c" stroke-width="3" />
+                <text x="395" y="146" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="900">P</text>
+
+                <circle cx="495" cy="140" r="28" fill="#f97316" stroke="#c2410c" stroke-width="3" />
+                <text x="495" y="146" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="900">P</text>
+
+                <circle cx="595" cy="140" r="28" fill="#f97316" stroke="#c2410c" stroke-width="3" />
+                <text x="595" y="146" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="900">P</text>
+
+                <path d="M 368 181 Q 495 202 622 181" fill="none" stroke="#c2410c" stroke-width="2.5" />
+                <text x="495" y="210" text-anchor="middle" fill="#c2410c" font-size="12" font-weight="800">Cadena Fosfato</text>
+              </g>
+            </svg>
+
+            <!-- Zonas de destino debajo del diagrama -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full mt-2">
+              ${q.targets.map(t => renderDropZone(t)).join("")}
+            </div>
+          </div>
+
+          <!-- Banco de Etiquetas -->
+          <div class="flex flex-wrap items-center justify-center gap-2">
+            ${chipsHTML}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- 6.2 ECUACIÓN DE HIDRÓLISIS DEL ATP (M1 Q2) ---
+    function getEquationState(qId) {
+      if (!state.answers[qId]) {
+        state.answers[qId] = {
+          reactant: null,
+          enzyme: null,
+          prod1: null,
+          prod2: null,
+          prod3: null,
+          prod4: null
+        };
+      }
+      return state.answers[qId];
+    }
+
+    function selectEqToken(val) {
+      state.selectedToken = state.selectedToken === val ? null : val;
+      render();
+    }
+
+    function assignEqSlot(qId, slotId) {
+      if (state.results[qId]) return;
+      const ans = getEquationState(qId);
+
+      if (state.selectedToken) {
+        Object.keys(ans).forEach(k => {
+          if (ans[k] === state.selectedToken) ans[k] = null;
+        });
+        ans[slotId] = state.selectedToken;
+        state.selectedToken = null;
+        render();
+      } else if (ans[slotId]) {
+        ans[slotId] = null;
+        render();
+      } else {
+        showToast("Selecciona una ficha del banco inferior para colocarla aquí.");
+      }
+    }
+
+    function handleEqDrop(e, qId, slotId) {
+      e.preventDefault();
+      if (state.results[qId]) return;
+      const val = e.dataTransfer.getData("text/plain");
+      if (!val) return;
+      const ans = getEquationState(qId);
+      Object.keys(ans).forEach(k => {
+        if (ans[k] === val) ans[k] = null;
+      });
+      ans[slotId] = val;
+      state.selectedToken = null;
+      render();
+    }
+
+    function renderEquationQuestion(q, submitted) {
+      const ans = getEquationState(q.id);
+      const usedValues = Object.values(ans).filter(Boolean);
+
+      const renderSlotBox = (slotId, placeholder, isEnzyme = false) => {
+        const val = ans[slotId];
+        let style = "border-dashed border-slate-300 bg-white text-slate-400 hover:border-indigo-400";
+        if (submitted) {
+          let ok = false;
+          if (slotId === "reactant") ok = val === q.correctReactant;
+          else if (slotId === "enzyme") ok = val === q.correctEnzyme;
+          else ok = q.correctProducts.includes(val);
+
+          style = ok
+            ? "border-solid border-emerald-500 bg-emerald-50 text-emerald-800 font-extrabold"
+            : "border-solid border-rose-500 bg-rose-50 text-rose-800 font-extrabold";
+        } else if (val) {
+          style = "border-solid border-indigo-500 bg-indigo-50 text-indigo-900 font-extrabold shadow-xs";
+        } else if (state.selectedToken) {
+          style = "border-dashed border-indigo-400 bg-indigo-50/50 text-indigo-600";
+        }
+
+        return `
+          <button
+            type="button"
+            onclick="assignEqSlot('${q.id}', '${slotId}')"
+            ondragover="event.preventDefault()"
+            ondrop="handleEqDrop(event, '${q.id}', '${slotId}')"
+            class="${isEnzyme ? 'px-3 py-1.5 text-xs min-w-[96px]' : 'px-3.5 py-2.5 text-xs sm:text-sm min-w-[84px]'} rounded-xl border-2 font-mono transition-all ${style}"
+          >
+            ${val || placeholder}
+          </button>
+        `;
+      };
+
+      const bankHTML = q.bank.map(item => {
+        const isUsed = usedValues.includes(item);
+        const isSelected = state.selectedToken === item;
+        return `
+          <button
+            type="button"
+            draggable="${!submitted && !isUsed}"
+            ondragstart="event.dataTransfer.setData('text/plain', '${item}')"
+            onclick="selectEqToken('${item}')"
+            ${submitted ? "disabled" : ""}
+            class="no-select px-3.5 py-2 rounded-xl font-mono font-bold text-xs sm:text-sm border transition-all ${
+              isSelected
+                ? "bg-indigo-600 text-white border-indigo-600 chip-selected"
+                : isUsed
+                ? "bg-slate-100 text-slate-400 border-slate-200 opacity-55"
+                : "bg-white text-slate-800 border-slate-300 hover:border-indigo-500 shadow-xs"
+            }"
+          >
+            ${item}
+          </button>
+        `;
+      }).join("");
+
+      return `
+        <div class="space-y-6">
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-6">
+            <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+              <!-- Reactivos -->
+              <span class="px-3.5 py-2.5 rounded-xl bg-violet-100 border border-violet-300 text-violet-900 font-mono font-extrabold text-xs sm:text-sm">
+                ATP
+              </span>
+              <span class="font-bold text-slate-500 text-lg">+</span>
+              ${renderSlotBox("reactant", "Reactivo")}
+
+              <!-- Flecha con Enzima -->
+              <div class="flex flex-col items-center mx-1 sm:mx-2">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Enzima</span>
+                ${renderSlotBox("enzyme", "Enzima", true)}
+                <div class="flex items-center text-slate-400 mt-1">
+                  <div class="w-16 sm:w-20 h-0.5 bg-slate-400"></div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 -ml-1.5"></i>
+                </div>
+              </div>
+
+              <!-- Productos -->
+              <div class="flex flex-wrap items-center justify-center gap-2">
+                ${renderSlotBox("prod1", "Prod. 1")}
+                <span class="font-bold text-slate-500">+</span>
+                ${renderSlotBox("prod2", "Prod. 2")}
+                <span class="font-bold text-slate-500">+</span>
+                ${renderSlotBox("prod3", "Prod. 3")}
+                <span class="font-bold text-slate-500">+</span>
+                ${renderSlotBox("prod4", "Prod. 4")}
+              </div>
+            </div>
+
+            ${submitted ? `
+              <div class="mt-4 pt-3 border-t border-slate-200 text-center text-xs font-mono font-bold text-emerald-700">
+                Ecuación correcta: ATP + H2O —(ATPasa)→ ADP + Pi + H+ + Energía
+              </div>
+            ` : ""}
+          </div>
+
+          <!-- Banco de fichas -->
+          <div class="flex flex-wrap items-center justify-center gap-2">
+            ${bankHTML}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- 6.3 OPCIÓN MÚLTIPLE (MCQ) ---
+    function selectMCQOption(qId, optIdx) {
+      if (state.results[qId]) return;
+      state.answers[qId] = optIdx;
+      render();
+    }
+
+    function renderMCQQuestion(q, submitted) {
+      const selectedIdx = state.answers[q.id];
+
+      const optionsHTML = q.options.map((optText, idx) => {
+        const isSelected = selectedIdx === idx;
+        const isCorrect = q.correctIndex === idx;
+
+        let cardClass = "border-slate-200 bg-white hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-800";
+        let badgeClass = "bg-slate-100 text-slate-600 border-slate-200";
+
+        if (submitted) {
+          if (isCorrect) {
+            cardClass = "border-emerald-500 bg-emerald-50/80 text-emerald-950 font-semibold";
+            badgeClass = "bg-emerald-600 text-white border-emerald-600";
+          } else if (isSelected && !isCorrect) {
+            cardClass = "border-rose-500 bg-rose-50/80 text-rose-950";
+            badgeClass = "bg-rose-600 text-white border-rose-600";
+          } else {
+            cardClass = "border-slate-200 bg-slate-50/60 text-slate-400";
+          }
+        } else if (isSelected) {
+          cardClass = "border-indigo-600 bg-indigo-50/70 text-indigo-950 font-semibold shadow-xs";
+          badgeClass = "bg-indigo-600 text-white border-indigo-600";
+        }
+
+        const letter = String.fromCharCode(65 + idx);
+        return `
+          <button
+            type="button"
+            onclick="selectMCQOption('${q.id}', ${idx})"
+            ${submitted ? "disabled" : ""}
+            class="w-full text-left p-2.5 sm:p-3 rounded-xl border-2 transition-all flex items-start gap-2.5 ${cardClass}"
+          >
+            <span class="w-6 h-6 rounded-md border text-xs font-extrabold font-mono flex items-center justify-center shrink-0 mt-0.5 ${badgeClass}">
+              ${letter}
+            </span>
+            <span class="text-xs sm:text-sm leading-snug flex-1">${optText}</span>
+          </button>
+        `;
+      }).join("");
+
+      return `<div class="space-y-2">${optionsHTML}</div>`;
+    }
+
+    // --- 6.4 EMPAREJAMIENTO DE COLUMNAS (MATCHING) ---
+    function getMatchingState(qId) {
+      if (!state.answers[qId]) {
+        state.answers[qId] = { activeLeft: null, pairs: {} };
+      }
+      return state.answers[qId];
+    }
+
+    function selectMatchLeft(qId, leftId) {
+      if (state.results[qId]) return;
+      const ans = getMatchingState(qId);
+      ans.activeLeft = ans.activeLeft === leftId ? null : leftId;
+      render();
+    }
+
+    function selectMatchRight(qId, rightId) {
+      if (state.results[qId]) return;
+      const ans = getMatchingState(qId);
+      if (!ans.activeLeft) {
+        showToast("Primero selecciona un elemento de la Columna A.");
+        return;
+      }
+      // Si el derecho ya estaba emparejado con otro, liberarlo
+      Object.keys(ans.pairs).forEach(k => {
+        if (ans.pairs[k] === rightId) delete ans.pairs[k];
+      });
+      ans.pairs[ans.activeLeft] = rightId;
+      ans.activeLeft = null;
+      render();
+    }
+
+    function renderMatchingQuestion(q, submitted) {
+      const ans = getMatchingState(q.id);
+
+      const leftHTML = q.colA.map(item => {
+        const pairedRight = ans.pairs[item.id];
+        const isActive = ans.activeLeft === item.id;
+        let cls = "border-slate-200 bg-white text-slate-800 hover:border-indigo-400";
+
+        if (submitted) {
+          const ok = pairedRight === q.correctPairs[item.id];
+          cls = ok
+            ? "border-emerald-500 bg-emerald-50 text-emerald-950"
+            : "border-rose-500 bg-rose-50 text-rose-950";
+        } else if (isActive) {
+          cls = "border-indigo-600 bg-indigo-50 text-indigo-950 ring-2 ring-indigo-300";
+        } else if (pairedRight) {
+          cls = "border-indigo-300 bg-indigo-50/40 text-slate-900";
+        }
+
+        return `
+          <button
+            type="button"
+            onclick="selectMatchLeft('${q.id}', '${item.id}')"
+            ${submitted ? "disabled" : ""}
+            class="w-full text-left p-2.5 rounded-xl border-2 transition-all flex items-center justify-between gap-2 ${cls}"
+          >
+            <span class="text-xs font-medium leading-snug">${item.text}</span>
+            <span class="shrink-0 px-2 py-0.5 rounded-md text-[11px] font-mono font-extrabold ${
+              pairedRight ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500"
+            }">
+              ${pairedRight || "?"}
+            </span>
+          </button>
+        `;
+      }).join("");
+
+      const rightHTML = q.colB.map(item => {
+        const linkedLeftId = Object.keys(ans.pairs).find(k => ans.pairs[k] === item.id);
+        let cls = "border-slate-200 bg-white text-slate-800 hover:border-indigo-400";
+
+        if (submitted) {
+          const expectedLeft = Object.keys(q.correctPairs).find(k => q.correctPairs[k] === item.id);
+          const ok = linkedLeftId === expectedLeft;
+          cls = ok
+            ? "border-emerald-500 bg-emerald-50 text-emerald-950"
+            : "border-rose-500 bg-rose-50 text-rose-950";
+        } else if (ans.activeLeft) {
+          cls = "border-dashed border-indigo-400 bg-indigo-50/30 text-slate-900 hover:bg-indigo-50";
+        } else if (linkedLeftId) {
+          cls = "border-indigo-300 bg-indigo-50/40 text-slate-900";
+        }
+
+        return `
+          <button
+            type="button"
+            onclick="selectMatchRight('${q.id}', '${item.id}')"
+            ${submitted ? "disabled" : ""}
+            class="w-full text-left p-2.5 rounded-xl border-2 transition-all flex items-center justify-between gap-2 ${cls}"
+          >
+            <span class="text-xs font-medium leading-snug">${item.text}</span>
+            ${linkedLeftId ? `<span class="shrink-0 px-1.5 py-0.5 rounded bg-slate-800 text-white text-[10px] font-mono font-bold">#${linkedLeftId}</span>` : ""}
+          </button>
+        `;
+      }).join("");
+
+      return `
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="space-y-2">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 block">Columna A (Concepto)</span>
+            ${leftHTML}
+          </div>
+          <div class="space-y-2">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 block">Columna B (Correspondencia)</span>
+            ${rightHTML}
+          </div>
+        </div>
+      `;
+    }
+
+    // --- 6.5 COMPLETAR ESPACIOS EN BLANCO (FILL BLANKS) ---
+    function getFillBlanksState(qId) {
+      if (!state.answers[qId]) {
+        state.answers[qId] = {};
+      }
+      return state.answers[qId];
+    }
+
+    function selectBlankToken(val) {
+      state.selectedToken = state.selectedToken === val ? null : val;
+      render();
+    }
+
+    function assignBlankSlot(qId, blankId) {
+      if (state.results[qId]) return;
+      const ans = getFillBlanksState(qId);
+
+      if (state.selectedToken) {
+        Object.keys(ans).forEach(k => {
+          if (ans[k] === state.selectedToken) delete ans[k];
+        });
+        ans[blankId] = state.selectedToken;
+        state.selectedToken = null;
+        render();
+      } else if (ans[blankId]) {
+        delete ans[blankId];
+        render();
+      } else {
+        showToast("Selecciona una palabra del banco inferior para ubicarla aquí.");
+      }
+    }
+
+    function handleBlankDrop(e, qId, blankId) {
+      e.preventDefault();
+      if (state.results[qId]) return;
+      const val = e.dataTransfer.getData("text/plain");
+      if (!val) return;
+      const ans = getFillBlanksState(qId);
+      Object.keys(ans).forEach(k => {
+        if (ans[k] === val) delete ans[k];
+      });
+      ans[blankId] = val;
+      state.selectedToken = null;
+      render();
+    }
+
+    function renderFillBlanksQuestion(q, submitted) {
+      const ans = getFillBlanksState(q.id);
+      const usedWords = Object.values(ans);
+
+      const paragraphHTML = q.segments.map(seg => {
+        if (typeof seg === "string") {
+          return `<span>${seg}</span>`;
+        }
+        const val = ans[seg.id];
+        let cls = "border-dashed border-indigo-400 bg-indigo-50/50 text-indigo-700";
+        if (submitted) {
+          const ok = val === seg.answer;
+          cls = ok
+            ? "border-solid border-emerald-500 bg-emerald-100 text-emerald-900 font-bold"
+            : "border-solid border-rose-500 bg-rose-100 text-rose-900 font-bold";
+        } else if (val) {
+          cls = "border-solid border-indigo-600 bg-indigo-600 text-white font-bold shadow-xs";
+        }
+
+        return `
+          <button
+            type="button"
+            onclick="assignBlankSlot('${q.id}', '${seg.id}')"
+            ondragover="event.preventDefault()"
+            ondrop="handleBlankDrop(event, '${q.id}', '${seg.id}')"
+            class="inline-flex items-center justify-center px-3 py-1 mx-1 my-0.5 rounded-lg border-2 text-xs sm:text-sm font-mono transition-all min-w-[105px] ${cls}"
+          >
+            ${val || `[${seg.label}]`}
+          </button>
+        `;
+      }).join("");
+
+      const bankHTML = q.bank.map(word => {
+        const isUsed = usedWords.includes(word);
+        const isSelected = state.selectedToken === word;
+        return `
+          <button
+            type="button"
+            draggable="${!submitted && !isUsed}"
+            ondragstart="event.dataTransfer.setData('text/plain', '${word}')"
+            onclick="selectBlankToken('${word}')"
+            ${submitted ? "disabled" : ""}
+            class="no-select px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all ${
+              isSelected
+                ? "bg-indigo-600 text-white border-indigo-600 chip-selected"
+                : isUsed
+                ? "bg-slate-100 text-slate-400 border-slate-200 opacity-55"
+                : "bg-white text-slate-800 border-slate-300 hover:border-indigo-500 shadow-xs"
+            }"
+          >
+            ${word}
+          </button>
+        `;
+      }).join("");
+
+      return `
+        <div class="space-y-6">
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-7 text-sm sm:text-base text-slate-800 leading-loose">
+            ${paragraphHTML}
+          </div>
+          <div class="flex flex-wrap items-center justify-center gap-2">
+            ${bankHTML}
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 7. VALIDACIÓN DE RESPUESTAS
+    // =========================================================================
+    function validateCurrentQuestion() {
+      const mod = MODULES[state.currentModuleIdx];
+      const q = mod.questions[state.currentQuestionIdx];
+      let isCorrect = false;
+
+      if (q.type === "atp_diagram") {
+        const ans = getATPState(q.id);
+        if (!ans.adenina || !ans.ribosa || !ans.fosfatos) {
+          showToast("Completa las 3 partes del diagrama antes de comprobar.");
+          return;
+        }
+        isCorrect = q.targets.every(t => ans[t.id] === t.correct);
+      } else if (q.type === "equation") {
+        const ans = getEquationState(q.id);
+        const slots = ["reactant", "enzyme", "prod1", "prod2", "prod3", "prod4"];
+        if (slots.some(s => !ans[s])) {
+          showToast("Completa todos los espacios de la reacción química.");
+          return;
+        }
+        const userProds = [ans.prod1, ans.prod2, ans.prod3, ans.prod4].sort();
+        const expectedProds = [...q.correctProducts].sort();
+        const prodsMatch = userProds.every((val, i) => val === expectedProds[i]);
+        isCorrect = ans.reactant === q.correctReactant && ans.enzyme === q.correctEnzyme && prodsMatch;
+      } else if (q.type === "mcq") {
+        const chosen = state.answers[q.id];
+        if (chosen === undefined || chosen === null) {
+          showToast("Selecciona una opción antes de comprobar.");
+          return;
+        }
+        isCorrect = chosen === q.correctIndex;
+      } else if (q.type === "matching") {
+        const ans = getMatchingState(q.id);
+        if (Object.keys(ans.pairs).length < q.colA.length) {
+          showToast("Empareja todos los elementos de la Columna A con la Columna B.");
+          return;
+        }
+        isCorrect = q.colA.every(item => ans.pairs[item.id] === q.correctPairs[item.id]);
+      } else if (q.type === "fill_blanks") {
+        const ans = getFillBlanksState(q.id);
+        const blanks = q.segments.filter(s => typeof s === "object");
+        if (blanks.some(b => !ans[b.id])) {
+          showToast("Completa todos los espacios en blanco del párrafo.");
+          return;
+        }
+        isCorrect = blanks.every(b => ans[b.id] === b.answer);
+      }
+
+      state.results[q.id] = { isCorrect };
+      state.selectedToken = null;
+      if (isCorrect) {
+        soundEngine.playSuccess();
+      } else {
+        soundEngine.playError();
+      }
+      render();
+    }
+
+    // =========================================================================
+    // 9. VISTAS DE RESUMEN DE MÓDULO Y REPORTE FINAL
+    // =========================================================================
+    function renderModuleSummaryView() {
+      const mod = MODULES[state.currentModuleIdx];
+      const stats = getModuleStats(state.currentModuleIdx);
+      const pct = Math.round((stats.correct / stats.total) * 100);
+      const isLastModule = state.currentModuleIdx === MODULES.length - 1;
+      const mentor = CHARACTERS[mod.characterKey];
+
+      const breakdownHTML = mod.questions.map((q, idx) => {
+        const res = state.results[q.id];
+        const ok = res && res.isCorrect;
+        return `
+          <div class="flex items-center justify-between p-3 rounded-xl border ${ok ? 'border-emerald-300 bg-emerald-50/90' : 'border-rose-300 bg-rose-50/90'}">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="w-7 h-7 rounded-lg font-mono text-xs font-extrabold flex items-center justify-center shrink-0 ${ok ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}">
+                ${idx + 1}
+              </span>
+              <p class="text-xs sm:text-sm font-semibold text-slate-800 truncate">${q.prompt.split('\n')[0]}</p>
+            </div>
+            <button onclick="selectModule(${state.currentModuleIdx}, ${idx})" class="ml-2 shrink-0 px-3 py-1 rounded-lg bg-white border border-slate-300 text-xs font-bold text-indigo-700 hover:bg-indigo-50">
+              Revisar
+            </button>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <div class="animate-enter flex-1 min-h-0 w-full blue-glass text-white rounded-3xl p-5 sm:p-7 flex flex-col justify-center">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center h-full">
+            <div class="md:col-span-5 flex flex-col items-center text-center border-b md:border-b-0 md:border-r border-cyan-400/25 pb-4 md:pb-0 md:pr-6">
+              ${renderCharacterImg(mod.characterKey, "w-36 h-48 sm:w-44 sm:h-56")}
+              <span class="text-xs font-extrabold uppercase tracking-wider text-cyan-300 mt-2">${mod.code} COMPLETADO • ${mentor.shortName}</span>
+              <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1 mb-1.5">${mod.title}</h2>
+              <p class="text-sm text-cyan-100/90 mb-5">
+                Obtuviste <strong class="text-amber-300">${stats.correct} de ${stats.total}</strong> aciertos (${pct}%).
+              </p>
+              <div class="flex flex-wrap items-center justify-center gap-3 w-full">
+                <button onclick="resetModule(${state.currentModuleIdx})" class="px-4 py-2.5 rounded-xl border border-cyan-300/40 bg-slate-900/70 hover:bg-slate-800 text-cyan-100 font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors">
+                  <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                  <span>Reintentar</span>
+                </button>
+                ${!isLastModule ? `
+                  <button onclick="selectModule(${state.currentModuleIdx + 1}, 0)" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg flex items-center gap-2 transition-colors">
+                    <span>Ir al ${MODULES[state.currentModuleIdx + 1].code}</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                  </button>
+                ` : `
+                  <button onclick="state.view='final_summary'; render();" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg flex items-center gap-2 transition-colors">
+                    <i data-lucide="trophy" class="w-4 h-4"></i>
+                    <span>Reporte Final</span>
+                  </button>
+                `}
+              </div>
+            </div>
+            <div class="md:col-span-7 work-panel text-slate-800 rounded-2xl p-4 sm:p-5 space-y-2.5 max-h-[62vh] overflow-y-auto">
+              ${breakdownHTML}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFinalSummaryView() {
+      const totalQ = getTotalQuestions();
+      const totalCorrect = getCorrectCount();
+      const totalPct = getNormalizedScore();
+
+      let levelTitle = "En Entrenamiento Metabólico";
+      if (totalPct >= 90) levelTitle = "¡Excelente Dominio en Fisiología del Ejercicio!";
+      else if (totalPct >= 70) levelTitle = "¡Muy Buen Desempeño Fisiológico!";
+      else if (totalPct >= 50) levelTitle = "Buen Progreso — Sigue Reforzando";
+
+      const moduleCards = MODULES.map((mod, idx) => {
+        const st = getModuleStats(idx);
+        const modPct = Math.round((st.correct / st.total) * 100);
+        const mentor = CHARACTERS[mod.characterKey];
+        return `
+          <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              ${renderCharacterImg(mod.characterKey, "w-14 h-18")}
+              <div class="min-w-0">
+                <span class="text-xs font-extrabold text-indigo-700 uppercase">${mod.code} • ${mentor.shortName}</span>
+                <h4 class="font-extrabold text-sm sm:text-base text-slate-900 truncate">${mod.title}</h4>
+                <p class="text-xs text-slate-600">${st.correct} de ${st.total} aciertos (${modPct}%)</p>
+              </div>
+            </div>
+            <button onclick="selectModule(${idx}, 0)" class="shrink-0 px-3.5 py-2 rounded-xl bg-white border border-slate-300 hover:border-indigo-500 text-xs font-bold text-slate-700">
+              Revisar
+            </button>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <div class="animate-enter flex-1 min-h-0 w-full blue-glass text-white rounded-3xl p-5 sm:p-7 flex flex-col justify-center">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center h-full">
+            <div class="md:col-span-5 flex flex-col items-center text-center border-b md:border-b-0 md:border-r border-cyan-400/25 pb-4 md:pb-0 md:pr-6">
+              <div class="flex items-end justify-center gap-2 mb-2">
+                ${renderCharacterImg("ale1", "w-24 h-32")}
+                ${renderCharacterImg("adr1", "w-28 h-36")}
+                ${renderCharacterImg("car1", "w-24 h-32")}
+              </div>
+              <span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-200 border border-cyan-400/40 text-xs font-extrabold uppercase tracking-wider">
+                FISIOLOGÍA DEL EJERCICIO
+              </span>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-white mt-2 mb-1.5">${levelTitle}</h2>
+              <p class="text-cyan-100/90 text-xs sm:text-sm mb-5">
+                Lograste <strong>${totalCorrect} de ${totalQ}</strong> aciertos totales (<strong class="text-amber-300">${totalPct} / 100 puntos</strong>).
+              </p>
+              <div class="flex flex-wrap items-center justify-center gap-3 w-full">
+                <button onclick="resetAll()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg flex items-center gap-2 transition-colors">
+                  <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                  <span>Reiniciar Todo</span>
+                </button>
+                <button onclick="goHome()" class="px-5 py-2.5 rounded-xl border border-cyan-300/40 bg-slate-900/70 hover:bg-slate-800 text-cyan-100 font-bold text-xs sm:text-sm transition-colors">
+                  Inicio
+                </button>
+              </div>
+            </div>
+            <div class="md:col-span-7 work-panel text-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+              ${moduleCards}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Inicializar al cargar
+    window.addEventListener("DOMContentLoaded", () => {
+      render();
+    });
+  </script>
+</body>
+</html>
